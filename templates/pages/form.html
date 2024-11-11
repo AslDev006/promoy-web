@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+{% load i18n %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% blocktrans %}ProMoy mahsulotlari{% endblocktrans %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-header img {
+            width: 100%;
+            /* Rasm kengligini 100% qilib o'zgartirdik */
+            height: auto;
+            /* Avtomatik balandlik */
+            border-radius: 10px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .form-group {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        input,
+        select {
+            width: calc(100% - 22px);
+            /* Barcha elementlar kengligi bir xil bo'lishi uchun */
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            /* Yumshoq chekkalar */
+            transition: all 0.3s ease;
+            /* Yumshoq o'tish */
+            background: linear-gradient(to right, #ffffff, #f0f0f0);
+            /* Yumshoq gradient fon */
+        }
+
+        select:focus,
+        input:focus {
+            border-color: #007bff;
+            /* Focusda ko'k chegara */
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            /* Focusda yumshoq soya */
+            background: white;
+            /* Focusda oq fon */
+        }
+
+        #total-price {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px;
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+            /* Yumshoq o'tish */
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            /* Hoverda to'q ko'k rang */
+        }
+
+        button:disabled {
+            background-color: #ccc;
+        }
+
+        .feature-selection {
+            display: none;
+        }
+
+        .error {
+            color: red;
+            font-size: 0.9em;
+        }
+
+        .select-error {
+            border: 1px solid red;
+            /* Qizil rangli chegaralar */
+            background-color: #ffe6e6;
+            /* Qizil rangli fon */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="form-container">
+        <div class="form-header">
+            <img src="{{ service.photo.url }}" alt="Product Image">
+            <h2>{% blocktrans %}Mahsulotlarni buyurtma qilish{% endblocktrans %}</h2>
+        </div>
+        <form id="productForm" method="post">{% csrf_token %}
+            <div class="form-group">
+                <label for="name">{% blocktrans %}Ism{% endblocktrans %}</label>
+                <input type="text" id="name" name="name" placeholder="Alisher Odilov" required>
+            </div>
+            <div class="form-group">
+                <label for="phone_number">{% blocktrans %}Telefon raqam{% endblocktrans %}</label>
+                <input type="tel" id="phone_number" name="phone_number" placeholder="+998901234567" required>
+            </div>
+             <div class="form-group">
+                <label for="feture_count">{% blocktrans %}Mahsulot soni{% endblocktrans %}</label>
+                <input type="number" id="feture_count" name="count" placeholder="123..." required>
+            </div>
+
+            <div class="error" id="error-message" style="display: none;"></div>
+
+            <button type="submit">{% blocktrans %}Yuborish{% endblocktrans %}</button>
+        </form>
+    </div>
+
+    <script>
+
+
+        const featureCountSelect = document.getElementById('featureCount');
+        const featureSelections = document.querySelectorAll('.feature-selection');
+        const submitButton = document.querySelector('button[type="submit"]');
+        const errorMessage = document.getElementById('error-message');
+        const form = document.getElementById('productForm');
+
+        // Show feature selection fields based on the selected count
+        featureCountSelect.addEventListener('change', function () {
+            const selectedCount = parseInt(this.value);
+            featureSelections.forEach((section, index) => {
+                section.style.display = index < selectedCount ? 'block' : 'none';
+            });
+
+            // Reset the selections and price
+            featureSelections.forEach(section => {
+                const selectElement = section.querySelector('select');
+                selectElement.value = '';
+                selectElement.classList.remove('select-error'); // O'chirish xatolari
+            });
+        });
+
+
+        // Handle form submission
+       form.addEventListener('submit', function (event) {
+        const selectedFeatures = [];
+        let hasError = false;
+
+        // Clear previous error styles
+        featureSelections.forEach(section => {
+            const selectElement = section.querySelector('select');
+            selectElement.classList.remove('duplicate', 'select-error');
+        });
+
+        // Check for duplicate feature selections
+        featureSelections.forEach((section) => {
+            const selectElement = section.querySelector('select');
+            const selectedValue = selectElement.value;
+
+            if (selectedValue) {
+                if (selectedFeatures.includes(selectedValue)) {
+                    hasError = true;
+                    // Highlight the duplicate select element
+                    selectElement.classList.add('duplicate', 'select-error');
+                } else {
+                    selectedFeatures.push(selectedValue);
+                }
+            }
+        });
+
+        if (hasError) {
+            event.preventDefault();  // Stops form submission
+            errorMessage.textContent = 'Boshqa xususiyatni tanlang!';
+            errorMessage.style.display = 'block';
+        } else {
+            errorMessage.style.display = 'none';
+            submitButton.disabled = true;
+        }
+    });
+    // Function to update available options in other selects
+    function updateAvailableOptions() {
+        // Get all selected values from all feature selects
+        const selectedValues = Array.from(document.querySelectorAll('.feature-selection select'))
+            .map(select => select.value)
+            .filter(value => value); // Only non-empty values
+
+        // Loop through each select element
+        document.querySelectorAll('.feature-selection select').forEach(select => {
+            const currentValue = select.value; // Current select's value
+
+            // Remove options from other selects if they are already selected in another select
+            Array.from(select.options).forEach(option => {
+                if (selectedValues.includes(option.value) && option.value !== currentValue) {
+                    option.disabled = true;  // Disable already selected options
+                } else {
+                    option.disabled = false; // Re-enable options that are not selected elsewhere
+                }
+            });
+        });
+    }
+
+    // Attach event listeners to all select elements for feature selections
+    document.querySelectorAll('.feature-selection select').forEach(select => {
+        select.addEventListener('change', updateAvailableOptions); // Call update function when an option is selected
+    });
+
+    // Initial call to update options on page load, in case there are pre-selected values
+    updateAvailableOptions();
+
+    </script>
+</body>
+</html>
