@@ -23,8 +23,6 @@ def get_post1(data):
     bot.send_message(chat_id=ids, text=f"#Product Sizga yangi murojaat mavjud !\n\n\n"
                                           f"Ism: {data['name']}\n"
                                           f"Telefon Raqam: {data['phone_number']}\n"
-                                          f"Funksiyalar: {data['feature_count']}\n"
-                                          f"Manzil: {data['address']}\n"                                                
                                           f"Miqdori: {data['count']}")
 
 def get_post12():

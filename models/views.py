@@ -1,9 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from .bitrix import send_form_data
 from .bot import get_post, get_post1, get_post12
 from .models import ServiceModel, ProductModel, AdviceModel, PartnerModel, Customer_Opinion, FunctionsModel
 from .forms import AdviceForm, ProductForm
 from django.utils.translation import gettext as _
 from django.utils.translation import get_language, activate, gettext
+import environ
+env = environ.Env()
+environ.Env.read_env()
+
+FORM_ID=env('FORM_ID')
 
 def home(req):
     service = ServiceModel.objects.filter(important=True)
@@ -79,7 +85,7 @@ def form_page(request, id):
 
         print(form_data)
         get_post1(form_data)
-        # send_form_data(FORM_ID, data=form_data)
+        send_form_data(FORM_ID, data=form_data)
         form = ProductForm()
         return redirect('success_page')
     else:
@@ -92,12 +98,15 @@ def form_page(request, id):
         'functions': functions
     }
     return render(request, 'pages/form.html', context)
+
+
 def success_page(request):
     product_footer = ServiceModel.objects.all()[:6]
     context = {
         "product_footer": product_footer
     }
     return render(request, 'pages/success.html', context)
+
 
 
 
